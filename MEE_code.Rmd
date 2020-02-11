@@ -242,18 +242,22 @@ inf <- (eval_store_mint(Y,covar,path)>1e-16)*1 # optimal final network
 
 ## EMtree
 
-The EMtree R package is available on gitHub (https://github.com/Rmomal/EMtree). The tolerance is lower for hard cases, as numerical artifacts tend to appear more often there. 
+The EMtree R package is available on gitHub (https://github.com/Rmomal/EMtree). It requires the R package `PLNmodels`, available on the CRAN. The resampling procedure can be used as written below, with call to the `parallel` library for allowing the parallel computation (here with 3 cores). 20 sub-samples is usually enough (`S=20`) and this is what is set for the article computations. The tolerance is set lower for hard cases, as numerical artifacts tend to appear more often there. 
+
+No resampling is performed to obtain edges probabilities for the second type of experiments.
 
 ```{r}
 library(EMtree) 
+library(PLNmodels)
+library(parallel)
 cond.tol<-switch(difficulty,"easy"=1e-12,"hard"=1e-6) 
-resample<-ResampleEMtree(counts=Y, covar_matrix=m, S=20, maxIter=200,
+resample<-ResampleEMtree(counts=Y, covar_matrix=m, S=20, maxIter=50,
                          cond.tol=cond.tol,cores=3)
-pmat<-resample$Pmat                            
+pmat<-resample$Pmat # rect. matrix gathering edges probabilities obtained for all sub-samples      
 inf<-1*(freq_selec(pmat, Pt=2/p)>0.8) # optimal final network after thresholding to 80%
 
 #============
 # Edges probabilities
 PLN_Y = PLNmodels::PLN(Y ~ -1 + ., data=m)
-EMtree_prob<-EMtree(PLN_Y)$edges_prob
+EMtree_prob<-EMtree(PLN_Y)$edges_prob # obtained with no resampling
 ```
